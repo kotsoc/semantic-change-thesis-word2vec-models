@@ -1,6 +1,8 @@
 import os
 import logging
 import csv
+import ijson
+import json
 import jsonlines
 from tqdm import tqdm
 from collections import Counter
@@ -15,6 +17,16 @@ def iter_comments(file_path, include_body=True):
     with open(file_path) as f:
         reader = csv.DictReader(f)
         for comment in reader:
+            if comment['body'] in ('[deleted]', '[removed]'):
+                continue
+            if not include_body:
+                del comment['body']
+            yield comment
+
+def iter_comments_json(file_path, include_body=True): 
+    with open(file_path, "rb") as f:
+         for line in f:
+            comment = json.loads(line)
             if comment['body'] in ('[deleted]', '[removed]'):
                 continue
             if not include_body:
@@ -44,7 +56,7 @@ def get_subs(chosen_subs_file, include_excluded=False):
         subs = [sub.lstrip('#') for sub in subs]
     return subs
 
-def iter_months(years=range(2015,2018)):
+def iter_months(years=range(2011,2014)):
      for year in years:
         for month in range(1,13): # 12 = 13-1 months in a year!
             yield year, month
