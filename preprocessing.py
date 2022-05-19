@@ -162,28 +162,35 @@ def iter_text_rows(filename):
         help="Number of processes for multiprocessing actions.")
 @click.option('--debug/--no-debug', default=False,
         help="Print debugging info.")
+@click.option('--json/--no-json', default=False,
+        help="use --json if comments are in json form")
 @click.pass_context
-def cli(ctx, corpus_dir, chosen_subs_file, n_processes, debug):
+def cli(ctx, corpus_dir, chosen_subs_file, n_processes, debug, json):
     ctx.ensure_object(dict)
     ctx.obj['CORPUS_DIR'] = Path(corpus_dir) 
     ctx.obj['SUBS'] = util.get_subs(chosen_subs_file)
     ctx.obj['N_PROCESSES'] = n_processes
     ctx.obj['LOG'] = util.create_logger(f"preprocessing", 'preproc.log', debug)
+    ctx.obj['JSON'] = json
 
-def find_dupes(corpus_dir, sub, log):
+def find_dupes(corpus_dir, sub, log, json):
     min_length = 50
     seen_hashes = {}
     dupe_ids = []
     sub_dir = Path(corpus_dir)/sub
     dupes_file = Path(sub_dir)/f"dupes.txt"
-    dupes_file = Path(corpus)/f"dupes.txt"
     #for year in util.iter_months(range(2011,2014)):
     for year in range(2013,2014):
         #comments_file = Path(sub_dir)/f"{year}-{month:02d}.csv"
         #comments_file = Path(sub_dir)/f"{year}-01.csv"
-        comments_file = Path(corpus_dir)/Path("./RC_2010-09.json")
+        comments_file = Path(sub_dir)/f"RC_2010-09.json"
         log.info(f"Finding dupes in {comments_file}")
-        for comment in util.iter_comments_json(comments_file):
+        if(json):
+            commentsIter =  util.iter_comments_json(comments_file)
+        else:
+            commentsIter =  util.iter_comments(comments_file)
+
+        for comment in commentsIter:
             comment_len = len(comment['body']) 
             if comment_len < min_length:
                 continue
@@ -206,27 +213,34 @@ def find_dupes(corpus_dir, sub, log):
 def dedupe_subs(ctx):
     log = ctx.obj['LOG']
     with Pool(processes=ctx.obj['N_PROCESSES']) as p:
-        args = [(ctx.obj['CORPUS_DIR'], sub, log) for sub in ctx.obj['SUBS']]
+        args = [(ctx.obj['CORPUS_DIR'], sub, log, ctx.obj['JSON']) for sub in ctx.obj['SUBS']]
         p.starmap(find_dupes, args)
 
-def tokenize_sub_month(corpus_dir, sub, year, month, log):
+def tokenize_sub_month(corpus_dir, sub, year, month, log, json):
     pp = Preprocessor(log)
-    #infile = corpus_dir/sub/f"{year}-{month:02d}.csv"
-    #outfile = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
-    infile = corpus_dir/sub/f"{year}-01.csv"
-    outfile = corpus_dir/sub/f"{year}-01.tokenized.csv"
+    # infile = corpus_dir/sub/f"{year}-01.csv"
+    # outfile = corpus_dir/sub/f"{year}-01.tokenized.csv"
+    infile = corpus_dir/sub/f"RC_2010-09.json"
+    outfile = corpus_dir/sub/f"RC_2010-09.tokenized.csv"
+
     dupes = [line.strip() for line in open(corpus_dir/sub/"dupes.txt").readlines()]
     log.info(f"Preprocessing {infile}")
     fo = open(outfile, 'w')
     with open(outfile, 'w') as f:
         writer = csv.DictWriter(f, fieldnames=['id', 'tokenized'])
         writer.writeheader()
-        for comment in util.iter_comments(infile):
+        if(json):
+            commentsIter =  util.iter_comments_json(infile)
+        else:
+            commentsIter =  util.iter_comments(infile)
+            
+        for comment in commentsIter:
             if comment['id'] in dupes:
                 continue
             tokens = pp.preprocess_comment(comment)
             if tokens:
                 writer.writerow({'id': comment['id'], 'tokenized': ' '.join(tokens)})
+    
     pp.log_summary()
 
 @cli.command()
@@ -235,9 +249,10 @@ def tokenize(ctx):
     log = ctx.obj['LOG']
     subs = ctx.obj['SUBS']
     corpus_dir = ctx.obj['CORPUS_DIR']
+    isJson = ctx.obj['JSON']
     #args = [(corpus_dir, sub, year, month, log) for sub in subs for year, month in util.iter_months(range(2017, 2018))]
     month = "n/a"
-    args = [(corpus_dir, sub, year, month, log) for sub in subs for year in range(2011, 2014)]
+    args = [(corpus_dir, sub, year, month, log, isJson) for sub in subs for year in range(2011, 2014)]
     with Pool(processes=ctx.obj['N_PROCESSES']) as p:
         p.starmap(tokenize_sub_month, args)
 
