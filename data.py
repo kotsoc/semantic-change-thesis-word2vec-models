@@ -153,7 +153,7 @@ if __name__ == '__main__':
             )
             query_string = f"""
               SELECT *
-              FROM `fh-bigquery.reddit_comments.{year}_{month:02d}`
+              FROM `fh-bigquery.reddit_comments.{year}`
               WHERE subreddit in ({', '.join([f"'{sub}'" for sub in subs])})
             """
             # Start the query, passing in the extra configuration.
