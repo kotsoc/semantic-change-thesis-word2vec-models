@@ -176,10 +176,14 @@ def find_dupes(corpus_dir, sub, log):
     dupe_ids = []
     sub_dir = Path(corpus_dir)/sub
     dupes_file = Path(sub_dir)/f"dupes.txt"
-    for year, month in util.iter_months((2015,2017)):
-        comments_file = Path(sub_dir)/f"{year}-{month:02d}.csv"
+    dupes_file = Path(corpus)/f"dupes.txt"
+    #for year in util.iter_months(range(2011,2014)):
+    for year in range(2013,2014):
+        #comments_file = Path(sub_dir)/f"{year}-{month:02d}.csv"
+        #comments_file = Path(sub_dir)/f"{year}-01.csv"
+        comments_file = Path(corpus_dir)/Path("./RC_2010-09.json")
         log.info(f"Finding dupes in {comments_file}")
-        for comment in util.iter_comments(comments_file):
+        for comment in util.iter_comments_json(comments_file):
             comment_len = len(comment['body']) 
             if comment_len < min_length:
                 continue
@@ -207,8 +211,10 @@ def dedupe_subs(ctx):
 
 def tokenize_sub_month(corpus_dir, sub, year, month, log):
     pp = Preprocessor(log)
-    infile = corpus_dir/sub/f"{year}-{month:02d}.csv"
-    outfile = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+    #infile = corpus_dir/sub/f"{year}-{month:02d}.csv"
+    #outfile = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+    infile = corpus_dir/sub/f"{year}-01.csv"
+    outfile = corpus_dir/sub/f"{year}-01.tokenized.csv"
     dupes = [line.strip() for line in open(corpus_dir/sub/"dupes.txt").readlines()]
     log.info(f"Preprocessing {infile}")
     fo = open(outfile, 'w')
@@ -229,7 +235,9 @@ def tokenize(ctx):
     log = ctx.obj['LOG']
     subs = ctx.obj['SUBS']
     corpus_dir = ctx.obj['CORPUS_DIR']
-    args = [(coprus_dir, sub, year, month, log) for sub in subs for year, month in util.iter_months()]
+    #args = [(corpus_dir, sub, year, month, log) for sub in subs for year, month in util.iter_months(range(2017, 2018))]
+    month = "n/a"
+    args = [(corpus_dir, sub, year, month, log) for sub in subs for year in range(2011, 2014)]
     with Pool(processes=ctx.obj['N_PROCESSES']) as p:
         p.starmap(tokenize_sub_month, args)
 
