@@ -96,7 +96,7 @@ def cli(token_counts_file, corpus_file, model_prefix, init_model, min_count,
     
     model = Word2Vec(vector_size=200, window=5, sg=1, hs=1,
             min_count=min_count, ns_exponent=ns_exponent,
-            alpha=0.1, workers=n_threads)
+            alpha=0.01, workers=n_threads)
 
 
     log.info(f"Building vocab with min count {min_count}")
