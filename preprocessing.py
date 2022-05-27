@@ -260,6 +260,7 @@ def make_vocab_sub(threshold, train_dir, vocab_dir, sub, years, log):
     token_counts = {year: Counter() for year in years}
     for year in years:
         train_file = train_dir/f"{sub}_{year}.txt"
+        #train_file = train_dir/"2011-2013_20110.txt"
         with open(train_file, 'r') as f:
             for line in f.readlines():
                 tokens = line.strip().split()
@@ -275,7 +276,7 @@ def make_vocab_sub(threshold, train_dir, vocab_dir, sub, years, log):
 @click.option("--vocab-threshold", type=int, 
         prompt='Vocab threshold (min count per corpus)',
         help="Minmum occurance (in each year) to be included in the final vocab.")
-@click.option('--years', multiple=True, default=[2015,2017])
+@click.option('--years', multiple=True, default=[2017,2017])
 @click.pass_context
 def make_vocab(ctx, vocab_dir, vocab_threshold, years):
     log = ctx.obj['LOG']
@@ -288,8 +289,9 @@ def make_vocab(ctx, vocab_dir, vocab_threshold, years):
 
 def count_tokens_sub_year(corpus_dir, sub, year, log):
     corpus_size = 0
-    for month in range(1,13):
-        tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+    for month in range(1,2):
+        # tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+        tokenized_file = corpus_dir/sub/f"2010-09.tokenized.csv"
         for comment in util.iter_tokenized_comments(tokenized_file):
             corpus_size += len(comment['tokenized'])
     log.debug(f"{sub} {year} totals {corpus_size} tokens.")
@@ -298,8 +300,9 @@ def count_tokens_sub_year(corpus_dir, sub, year, log):
 def prep_train_files_sub_year(corpus_dir, train_dir, sub, year, max_corpus_count, log):
     log.info(f"Prepping Gensim training file for {sub} {year}")
     all_comments = []
-    for month in range(1,13):
-        tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+    for month in range(1,2):
+        #tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
+        tokenized_file = corpus_dir/sub/f"2010-09.tokenized.csv"
         all_comments += list(util.iter_tokenized_comments(tokenized_file))
     random.shuffle(all_comments)
     sampled_tokens = 0
@@ -314,7 +317,7 @@ def prep_train_files_sub_year(corpus_dir, train_dir, sub, year, max_corpus_count
 
 @cli.command()
 @click.argument("train_dir", type=click.Path())
-@click.option('--years', multiple=True, default=[2015,2017])
+@click.option('--years', multiple=True, default=[2011,2011])
 @click.pass_context
 def prep_train_files(ctx, train_dir, years):
     train_dir = Path(train_dir)
@@ -323,6 +326,7 @@ def prep_train_files(ctx, train_dir, years):
     corpus_dir = ctx.obj['CORPUS_DIR']
     log = ctx.obj['LOG']
     log.info(f"Computing corpus sizes...")
+    log.info(subs)
     with Pool(processes=ctx.obj['N_PROCESSES']) as p:
         args = [(corpus_dir, sub, year, log) for sub in subs for year in years]
         corpus_sizes = p.starmap(count_tokens_sub_year, args)

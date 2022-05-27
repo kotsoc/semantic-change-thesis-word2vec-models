@@ -90,11 +90,16 @@ def cli(token_counts_file, corpus_file, model_prefix, init_model, min_count,
     total_tokens = sum(token_counts.values())
     log.info(f"Unique tokens: {len(token_counts)}, total tokens: {total_tokens}.")
 
-    model = Word2Vec(size=200, window=5, sg=1, negative=5,
-            min_count=min_count, sample=1e-5, ns_exponent=ns_exponent,
-            alpha=alpha, workers=n_threads)
+    # model = Word2Vec(size=200, window=5, sg=1,
+    #         min_count=min_count, sample=1e-5, ns_exponent=ns_exponent,
+    #         alpha=alpha, workers=n_threads)
+    
+    model = Word2Vec(vector_size=200, window=5, sg=1, hs=1,
+            min_count=min_count, ns_exponent=ns_exponent,
+            alpha=0.1, workers=n_threads)
 
-    log.info(f"Bulinding vocab with min count {min_count}")
+
+    log.info(f"Building vocab with min count {min_count}")
     model.build_vocab_from_freq(token_counts)
 
     corpus_examples, corpus_words =  corpus_counts(corpus_file)
@@ -105,7 +110,10 @@ def cli(token_counts_file, corpus_file, model_prefix, init_model, min_count,
     # Out of vocab words in init_model are ignored.
     # lockf=1.0 means that imported word vectors are trained (=0.0 means frozen)
     if init_model is not None:
-        model.intersect_word2vec_format(init_model, binary=False, lockf=1.0)
+        #Workaround to avoid index out of bounds in gensim 4.0
+        model.wv.vectors_lockf = np.ones(len(model.wv), dtype=np.float32)
+        model.wv.intersect_word2vec_format(init_model, binary=False, lockf=1.0)
+        #model.vectors_lockf = np.ones(1, dtype=np.float32)
 
     callbacks = [AngularChange(stop_threshold, epochs, model_prefix)]
     if save_checkpoints:
