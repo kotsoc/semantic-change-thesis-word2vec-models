@@ -12,13 +12,13 @@ if __name__ == '__main__':
 
     df["cos_sim"] = np.ones(97)
     cos_dist = {}
-    with open("results/changesCorrectAlpha.txt", 'r') as f:
+    with open("results/changesCorrectAlpha.txt", 'r', errors='ignore') as f:
         for line in f.readlines():
             tokens = line.strip().split()
             if(tokens[0] in words):
                df.at[tokens[0], "cos_sim"] = tokens[1]
     print(df)
-    fig = px.scatter(df, x="cos_sim", y="shift_index")
+    fig = px.scatter(df, x="cos_sim", y="shift_index", color=df.index,  trendline="ols")
     fig.show()
     f.close()
     
