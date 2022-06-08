@@ -11,11 +11,21 @@ reddit_columns = [
     'downs', 'created_utc', 'subreddit_id', 'link_id', 'parent_id', 'score',
     'retrieved_on', 'controversiality', 'gilded', 'id', 'subreddit', 'ups',
     'distinguished', 'author_flair_css_class']
-
+    
 def iter_comments_json(file_path, include_body=True): 
     with open(file_path, "rb") as f:
-         for line in f:
+        for line in f:
             comment = json.loads(line)
+            if comment['body'] in ('[deleted]', '[removed]'):
+                continue
+            if not include_body:
+                del comment['body']
+            yield comment
+
+def iter_comments(file_path, include_body=True): 
+    with open(file_path) as f:
+        reader = csv.DictReader(f)
+        for comment in reader:
             if comment['body'] in ('[deleted]', '[removed]'):
                 continue
             if not include_body:

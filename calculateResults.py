@@ -30,7 +30,7 @@ def cos_sim(v1, v2):
         return np.minimum(val, np.ones_like(val))
 
 def angular_distance(v1, v2):
-    # return (1-cos_sim(v1,v2))
+    #return (1-cos_sim(v1,v2))
     return np.arccos(cos_sim(v1,v2)) / np.pi
     # return 1- np.dot(v1,v2)/(np.linalg.norm(v1)*np.linalg.norm(v2))
          

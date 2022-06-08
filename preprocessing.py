@@ -183,7 +183,7 @@ def find_dupes(corpus_dir, sub, log, json):
     for year in range(2013,2014):
         #comments_file = Path(sub_dir)/f"{year}-{month:02d}.csv"
         #comments_file = Path(sub_dir)/f"{year}-01.csv"
-        comments_file = Path(sub_dir)/f"RC_2010-09.json"
+        comments_file = Path(sub_dir)/f"reddit_2013-10.json"
         log.info(f"Finding dupes in {comments_file}")
         if(json):
             commentsIter =  util.iter_comments_json(comments_file)
@@ -220,8 +220,8 @@ def tokenize_sub_month(corpus_dir, sub, year, month, log, json):
     pp = Preprocessor(log)
     # infile = corpus_dir/sub/f"{year}-01.csv"
     # outfile = corpus_dir/sub/f"{year}-01.tokenized.csv"
-    infile = corpus_dir/sub/f"RC_2010-09.json"
-    outfile = corpus_dir/sub/f"RC_2010-09.tokenized.csv"
+    infile = corpus_dir/sub/f"reddit_2013-10.json"
+    outfile = corpus_dir/sub/f"reddit_2013-10.json.tokenized.csv"
 
     dupes = [line.strip() for line in open(corpus_dir/sub/"dupes.txt").readlines()]
     log.info(f"Preprocessing {infile}")
@@ -252,7 +252,7 @@ def tokenize(ctx):
     isJson = ctx.obj['JSON']
     #args = [(corpus_dir, sub, year, month, log) for sub in subs for year, month in util.iter_months(range(2017, 2018))]
     month = "n/a"
-    args = [(corpus_dir, sub, year, month, log, isJson) for sub in subs for year in range(2011, 2014)]
+    args = [(corpus_dir, sub, year, month, log, isJson) for sub in subs for year in range(2013, 2014)]
     with Pool(processes=ctx.obj['N_PROCESSES']) as p:
         p.starmap(tokenize_sub_month, args)
 
@@ -276,7 +276,7 @@ def make_vocab_sub(threshold, train_dir, vocab_dir, sub, years, log):
 @click.option("--vocab-threshold", type=int, 
         prompt='Vocab threshold (min count per corpus)',
         help="Minmum occurance (in each year) to be included in the final vocab.")
-@click.option('--years', multiple=True, default=[2017,2017])
+@click.option('--years', multiple=True, default=[2013,2013])
 @click.pass_context
 def make_vocab(ctx, vocab_dir, vocab_threshold, years):
     log = ctx.obj['LOG']
@@ -291,7 +291,7 @@ def count_tokens_sub_year(corpus_dir, sub, year, log):
     corpus_size = 0
     for month in range(1,2):
         # tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
-        tokenized_file = corpus_dir/sub/f"2010-09.tokenized.csv"
+        tokenized_file = corpus_dir/sub/f"reddit_2013-10.tokenized.csv"
         for comment in util.iter_tokenized_comments(tokenized_file):
             corpus_size += len(comment['tokenized'])
     log.debug(f"{sub} {year} totals {corpus_size} tokens.")
@@ -302,7 +302,7 @@ def prep_train_files_sub_year(corpus_dir, train_dir, sub, year, max_corpus_count
     all_comments = []
     for month in range(1,2):
         #tokenized_file = corpus_dir/sub/f"{year}-{month:02d}.tokenized.csv"
-        tokenized_file = corpus_dir/sub/f"2010-09.tokenized.csv"
+        tokenized_file = corpus_dir/sub/f"reddit_2013-10.tokenized.csv"
         all_comments += list(util.iter_tokenized_comments(tokenized_file))
     random.shuffle(all_comments)
     sampled_tokens = 0

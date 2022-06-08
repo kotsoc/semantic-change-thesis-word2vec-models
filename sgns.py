@@ -76,7 +76,7 @@ class EpochSaver(CallbackAny2Vec):
 @click.option('--min-count', default=100,
         help='Minimum frequency for a word to appear in the vocabulary.')
 @click.option('--ns-exponent', default=0.75)
-@click.option('--alpha', default=0.025)
+@click.option('--alpha', default=0.01)
 @click.option('--epochs', default=50)
 @click.option("--stop-threshold", type=float, default=1e-4,
         help="Average angular change between epochs below which training will be stopped.")
